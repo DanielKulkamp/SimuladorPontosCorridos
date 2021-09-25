@@ -25,13 +25,13 @@ class Time:
 
 def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
     casa.gols_pro += gcasa
-    #casa.hist_gol_casa.append(gcasa)
-    #casa.hist_gol.append(gcasa)
+    casa.hist_gol_casa.append(gcasa)
+    casa.hist_gol.append(gcasa)
     casa.gols_contra += gfora
     casa.saldo_gols = casa.gols_pro - casa.gols_contra
     fora.gols_pro += gfora
-    #fora.hist_gol_fora.append(gfora)
-    #fora.hist_gol.append(gfora)
+    fora.hist_gol_fora.append(gfora)
+    fora.hist_gol.append(gfora)
     fora.gols_contra += gcasa
     fora.saldo_gols = fora.gols_pro - fora.gols_contra
     W = 0
@@ -162,6 +162,4 @@ for time in times:
     print(f'{time}\t{dicprobs[time]["titulos"]/div:.2f}\t{dicprobs[time]["acessos"]/div:.2f}\t{dicprobs[time]["rebaixamentos"]/div:.2f}')
 
 
-#print(f'%de acesso: {promocoes/n_simulacoes}, algoritmo: {algoritmo.__name__}')
-#print(f'Quedas: Bru {qued_bru/n_simulacoes}, Vit {qued_vit/n_simulacoes}, Lon {qued_lon/n_simulacoes}')
 
