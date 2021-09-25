@@ -1,6 +1,7 @@
 from random import randint, randrange, random, choice
 class Time:
     def __init__(self, nome):
+        self.rating = 1000
         self.nome = nome
         self.jogos = 0
         self.vitorias = 0
@@ -19,50 +20,53 @@ class Time:
         self.hist_gol = []
         self.hist_gol_casa = []
         self.hist_gol_fora = []
-    
-    def fora(self, placar):
-        gols_tomados = int(placar[0])
-        gols_feitos = int(placar[2])
-        self.gols_contra += gols_tomados
-        self.gols_pro += gols_feitos
-        self.saldo_gols = self.gols_pro - self.gols_contra
-        self.hist_gol.append(gols_feitos)
-        self.hist_gol_fora.append(gols_feitos)
-        self.jogos += 1
-        if gols_feitos > gols_tomados:
-            self.vitorias += 1
-            self.pontos += 3
-            self.vitorias_fora += 1
-        elif gols_feitos == gols_tomados:
-            self.empates += 1
-            self.empates_fora += 1
-            self.pontos += 1
-        else:
-            self.derrotas += 1
-            self.derrotas_fora += 1
+  
 
-    def casa(self, placar):
-        gols_tomados = int(placar[2])
-        gols_feitos = int(placar[0])
-        self.gols_contra += gols_tomados
-        self.gols_pro += gols_feitos
-        self.saldo_gols = self.gols_pro - self.gols_contra
-        self.hist_gol.append(gols_feitos)
-        self.hist_gol_casa.append(gols_feitos)
-        self.jogos += 1
-        if gols_feitos > gols_tomados:
-            self.vitorias += 1
-            self.pontos += 3
-            self.vitorias_casa += 1
-        elif gols_feitos == gols_tomados:
-            self.empates += 1
-            self.empates_casa += 1
-            self.pontos += 1
-        else:
-            self.derrotas += 1
-            self.derrotas_casa += 1
+def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
+    casa.gols_pro += gcasa
+    casa.hist_gol_casa.append(gcasa)
+    casa.hist_gol.append(gcasa)
+    casa.gols_contra += gfora
+    casa.saldo_gols = casa.gols_pro - casa.gols_contra
+    fora.gols_pro += gfora
+    fora.hist_gol_fora.append(gfora)
+    fora.hist_gol.append(gfora)
+    fora.gols_contra += gcasa
+    fora.saldo_gols = fora.gols_pro - fora.gols_contra
+    W = 0
+    if gcasa > gfora:
+        W = 1
+        casa.vitorias += 1
+        casa.vitorias_casa += 1
+        casa.pontos += 3
+        fora.derrotas += 1
+        fora.derrotas_fora += 1
+    elif gcasa == gfora:
+        W = 0.5
+        casa.empates += 1
+        casa.empates_casa += 1
+        casa.pontos +=1
+        fora.empates += 1
+        fora.empates_fora += 1
+        fora.pontos += 1
+    else:
+        W = 0
+        casa.derrotas += 1
+        casa.derrotas_casa += 1
+        fora.vitorias += 1
+        fora.vitorias_fora += 1
+        fora.pontos += 3
+    dr = casa.rating - fora.rating
+    I = 60
+    We = 1/(1+10^(-dr/400))
+    delta = I * (W-We)
+    casa.rating += delta
+    fora.rating -= delta
 
-times = [ "AVA", "BOT", "BRA", "BRU", "CON", "COR", "CRB", "CRU", "CSA", "GOI", "GUA", "LON", "NAU", "OPE", "PON", "REM", "SAM", "VAS", "VIL", "VIT"]
+
+
+times = ['BRA', 'LON', 'GUA', 'VIT', 'NAU', 'CSA', 'VIL', 'BOT', 'VAS', 'OPE', 'CRB', 'REM', 'CON', 'CRU', 'CFC', 'AVA', 'BRU', 'PON', 'SAM', 'GOI']
+#times = [ "AVA", "BOT", "BRA", "BRU", "CON", "COR", "CRB", "CRU", "CSA", "GOI", "GUA", "LON", "NAU", "OPE", "PON", "REM", "SAM", "VAS", "VIL", "VIT"]
 
 def simula_random(casa, fora):
     placar = f'{randint(0,3)}-{randint(0,3)}'
