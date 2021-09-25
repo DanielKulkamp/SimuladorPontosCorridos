@@ -1,4 +1,5 @@
 from random import randint, randrange, random, choice
+import copy
 class Time:
     def __init__(self, nome):
         self.rating = 1000.0
@@ -24,13 +25,13 @@ class Time:
 
 def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
     casa.gols_pro += gcasa
-    casa.hist_gol_casa.append(gcasa)
-    casa.hist_gol.append(gcasa)
+    #casa.hist_gol_casa.append(gcasa)
+    #casa.hist_gol.append(gcasa)
     casa.gols_contra += gfora
     casa.saldo_gols = casa.gols_pro - casa.gols_contra
     fora.gols_pro += gfora
-    fora.hist_gol_fora.append(gfora)
-    fora.hist_gol.append(gfora)
+    #fora.hist_gol_fora.append(gfora)
+    #fora.hist_gol.append(gfora)
     fora.gols_contra += gcasa
     fora.saldo_gols = fora.gols_pro - fora.gols_contra
     W = 0
@@ -67,6 +68,11 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
 times = ['BRA', 'LON', 'GUA', 'VIT', 'NAU', 'CSA', 'VIL', 'BOT', 'VAS', 'OPE', 'CRB', 'REM', 'CON', 'CRU', 'CFC', 'AVA', 'BRU', 'PON', 'SAM', 'GOI']
 #times = [ "AVA", "BOT", "BRA", "BRU", "CON", "COR", "CRB", "CRU", "CSA", "GOI", "GUA", "LON", "NAU", "OPE", "PON", "REM", "SAM", "VAS", "VIL", "VIT"]
 
+dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
+
+   
+
+
 def simula_random(casa: Time, fora: Time):
     match(casa, fora, randint(0,3), randint(0,3))
 
@@ -102,21 +108,21 @@ def simula_ELOHFA(casa: Time, fora: Time):
     match(casa, fora, gcasa, gfora)
 
 
-n_simulacoes = 10000
+#dic_start = {}
+#for time in times:
+#    dic_start[time] = Time(time)
+
+
+n_simulacoes = 100000
 algoritmo = simula_ELOHFA
-promocoes = 0
-qued_vit = 0
-qued_lon = 0
-qued_bru = 0 
 
 for nth_sim in range(n_simulacoes):
     if nth_sim % 1000 == 0:
-        print(f'Parcial: {promocoes/(nth_sim+1)}')
+        print(f'-',end="")
 
     dictimes = {}
     for time in times:
         dictimes[time] = Time(time)
-
     jogos_restantes = []
     with open('TABELA SERIE B.txt', 'r') as arquivo:
         for line in arquivo.readlines():
@@ -129,6 +135,8 @@ for nth_sim in range(n_simulacoes):
             else:
                 jogos_restantes.append( (tcasa, tfora) )
 
+    #dictimes = copy.deepcopy(dic_start)
+
     for (casa, fora) in jogos_restantes:
         algoritmo(dictimes[casa], dictimes[fora])
 
@@ -138,19 +146,22 @@ for nth_sim in range(n_simulacoes):
     times.sort(key= lambda x: dictimes[x].vitorias, reverse=True)
     times.sort(key= lambda x: dictimes[x].pontos, reverse=True)
 
-    if 'VAS' in times[0:4]:
-        promocoes += 1
-    if 'LON' in times[-4:]:
-        qued_lon += 1
-    if 'VIT' in times[-4:]:
-        qued_vit += 1
-    if 'BRU' in times[-4:]:
-        qued_bru += 1
+    dicprobs[times[0]]["titulos"] += 1
+    for team in times[0:4]:
+        dicprobs[team]["acessos"] += 1
+    for team in times[-4:]:
+        dicprobs[team]["rebaixamentos"] +=1
     
-    #for time in times:
-    #    t = dictimes[time]
-    #    print(f'{t.nome}\t{t.pontos}\t{t.rating}')
+times.sort(key= lambda x: dicprobs[x]["rebaixamentos"])
+times.sort(key= lambda x: dicprobs[x]["acessos"], reverse=True)
+times.sort(key= lambda x: dicprobs[x]["titulos"], reverse=True)
+print(f'\nFinal da simulação por {algoritmo.__name__}')
+print('Time\tTítulo\tSubir\tcair')
+div = n_simulacoes/100
+for time in times:
+    print(f'{time}\t{dicprobs[time]["titulos"]/div:.2f}\t{dicprobs[time]["acessos"]/div:.2f}\t{dicprobs[time]["rebaixamentos"]/div:.2f}')
 
-print(f'%de acesso: {promocoes/n_simulacoes}, algoritmo: {algoritmo.__name__}')
-print(f'Quedas: Bru {qued_bru/n_simulacoes}, Vit {qued_vit/n_simulacoes}, Lon {qued_lon/n_simulacoes}')
+
+#print(f'%de acesso: {promocoes/n_simulacoes}, algoritmo: {algoritmo.__name__}')
+#print(f'Quedas: Bru {qued_bru/n_simulacoes}, Vit {qued_vit/n_simulacoes}, Lon {qued_lon/n_simulacoes}')
 
