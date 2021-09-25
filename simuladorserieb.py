@@ -1,7 +1,7 @@
 from random import randint, randrange, random, choice
 class Time:
     def __init__(self, nome):
-        self.rating = 1000
+        self.rating = 1000.0
         self.nome = nome
         self.jogos = 0
         self.vitorias = 0
@@ -56,131 +56,101 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
         fora.vitorias += 1
         fora.vitorias_fora += 1
         fora.pontos += 3
-    dr = casa.rating - fora.rating
+    dr = float(casa.rating - fora.rating)
     I = 60
-    We = 1/(1+10^(-dr/400))
+    We = 1./(1.+10.0**(-dr/400.0))
     delta = I * (W-We)
     casa.rating += delta
     fora.rating -= delta
 
 
-
 times = ['BRA', 'LON', 'GUA', 'VIT', 'NAU', 'CSA', 'VIL', 'BOT', 'VAS', 'OPE', 'CRB', 'REM', 'CON', 'CRU', 'CFC', 'AVA', 'BRU', 'PON', 'SAM', 'GOI']
 #times = [ "AVA", "BOT", "BRA", "BRU", "CON", "COR", "CRB", "CRU", "CSA", "GOI", "GUA", "LON", "NAU", "OPE", "PON", "REM", "SAM", "VAS", "VIL", "VIT"]
 
-def simula_random(casa, fora):
-    placar = f'{randint(0,3)}-{randint(0,3)}'
-    dictimes[casa].casa(placar)
-    dictimes[fora].fora(placar)
+def simula_random(casa: Time, fora: Time):
+    match(casa, fora, randint(0,3), randint(0,3))
 
-def simula_histo(casa, fora):
-    placar = f'{choice(dictimes[casa].hist_gol)}-{choice(dictimes[fora].hist_gol)}'
-    dictimes[casa].casa(placar)
-    dictimes[fora].fora(placar)
+def simula_hist_local(casa: Time, fora: Time):
+    match(casa, fora, choice(casa.hist_gol_casa), choice(fora.hist_gol_fora))
 
-def simula_histo_local(casa, fora):
-    placar = f'{choice(dictimes[casa].hist_gol_casa)}-{choice(dictimes[fora].hist_gol_fora)}'
-    dictimes[casa].casa(placar)
-    dictimes[fora].fora(placar)
+def simula_ELO(casa: Time, fora: Time):
+    dr = casa.rating - fora.rating
+    We = 1/(1+10**(-dr/400))
+    if We > 0.5:
+        Wdraw = 1-We    
+    else:
+        Wdraw = We
+    Wb = 1-We
+    results = [] + [(1,0)] *int(100*We)
+    results += [(0,0)] * int(100*Wdraw)
+    results += [(0,1)] * int(100*Wb)
+    (gcasa, gfora) = choice(results)
+    match(casa, fora, gcasa, gfora)
 
-def simula_ved_local(casa, fora):
-    res = [ '1-0' ] * 10 *(dictimes[casa].vitorias_casa + dictimes[fora].derrotas_fora) 
-    res = res + [ '0-0' ] * 10 *  (dictimes[casa].empates_casa + dictimes[fora].empates_fora)
-    res = res + [ '0-1'] * 10 * (dictimes[casa].derrotas_casa + dictimes[fora].vitorias_fora)
-    placar = choice(res)
-    dictimes[casa].casa(placar)
-    dictimes[fora].fora(placar)
-
-def simula_ved_corvas(casa, fora):
-    casaa = casa
-    foraa = fora
-    if fora == 'VAS':
-        foraa = 'COR'
-    elif casa == 'VAS':
-        casaa = 'COR'
-    
-    res = [ '1-0' ] * 10 *(dictimes[casaa].vitorias_casa + dictimes[foraa].derrotas_fora) 
-    res = res + [ '0-0' ] * 10 *  (dictimes[casaa].empates_casa + dictimes[foraa].empates_fora)
-    res = res + [ '0-1'] * 10 * (dictimes[casaa].derrotas_casa + dictimes[foraa].vitorias_fora)
-    placar = choice(res)
-    dictimes[casa].casa(placar)
-    dictimes[fora].fora(placar)
+def simula_ELOHFA(casa: Time, fora: Time):
+    dr = casa.rating+100 - fora.rating
+    We = 1/(1+10**(-dr/400))
+    if We > 0.5:
+        Wdraw = 1-We    
+    else:
+        Wdraw = We
+    Wb = 1-We
+    results = [] + [(1,0)] *int(100*We)
+    results += [(0,0)] * int(100*Wdraw)
+    results += [(0,1)] * int(100*Wb)
+    (gcasa, gfora) = choice(results)
+    match(casa, fora, gcasa, gfora)
 
 
-promotions = 0
-posicoes = 0
 n_simulacoes = 10000
+algoritmo = simula_ELOHFA
+promocoes = 0
+qued_vit = 0
+qued_lon = 0
+qued_bru = 0 
+
 for nth_sim in range(n_simulacoes):
+    if nth_sim % 1000 == 0:
+        print(f'Parcial: {promocoes/(nth_sim+1)}')
+
     dictimes = {}
     for time in times:
         dictimes[time] = Time(time)
 
-    
-
-
-    confrontos = [ 
-        #       AVA BOT BRA BRU CON COR CRB CRU CSA GOI GUA LON NAU OPE PON REM SAM VAS VIL VIT  
-        "AVA	—	1–1	1–1	1–2	2–1	1–2	1–0	R31	R35	1–0	0–1	R27	2–0	1–0	R29	1–0	R38	3–1	1–1	R34",
-        "BOT	R28	—	1–0	R31	R33	2–0	R29	3–3	2–0	0–2	R38	4–0	3–1	R36	2–0	3–0	R26	2–0	3–2	1–0",
-        "BRA	R33	R37	—	R27	1–1	0–2	0–1	0–0	0–1	2–1	R35	0–0	R32	R29	1–1	1–1	1–2	1–2	R30	1–0",
-        "BRU	0–0	2–1	1–0	—	3–0	0–0	R36	1–2	2–3	0–1	R28	0–0	R33	R37	2–1	R30	0–0	0-1	R32	0–0",
-        "CON	R30	0–1	1–1	R34	—	0–1	1–2	3–1	0–2	1–2	1–4	R32	R35	R26	R37	1–2	2–0	R28	1–0	1–1",
-        "COR	2–0	0–1	R36	4–0	R27	—	1–1	R29	R37	1–1	R26	1–1	3–1	R33	2–0	2–1	R31	1–1	1–0	1–0",
-        "CRB	R26	2–1	2–1	3–0	3–2	R32	—	0–0	R28	0–1	R30	R35	1–1	0–0	1–1	2–2	R33	1–1	2–1	R37",
-        "CRU	0–3	R30	R28	R35	1–0	0–0	3–4	—	R26	1–1	3–3	2–2	R38	1–1	1–0	R32	1–1	2–1	R33	2–2",
-        "CSA	0–0	2-0	R38	R29	R36	3–0	0–1	2–1	—	0–1	1–1	1–0	0–1	R31	R27	R34	0–0	2–2	1–1	2–1",
-        "GOI	3–0	R32	2–1	R38	2–0	R35	1–0	1–1	R30	—	2–1	0–0	0–1	1–0	R33	1–1	2–2	1–0	1-2	R28",
-        "GUA	R36	1–1	2–0	4–1	R31	0–2	1–0	R27	1–0	R37	—	R29	1–3	3–0	1–0	2–0	0–0	R33	1–4	1–1",
-        "LON	1–3	2–2	0–0	0–1	0–0	2–3	0–2	R34	0–2	R31	0–1	—	0–0	1–2	R36	1–0	R28	R38	1–0	R26",
-        "NAU	R37	3–1	2–1	1–1	0–4	R34	R27	0–1	1–0	R29	1–1	1–2	—	5–0	1–1	1–1	R36	R31	2–0	1–1",
-        "OPE	R32	1–0	2–1	1–1	0–0	1–0	R38	2–1	0–2	R34	2–5	R30	R28	—	1–2	R35	1–0	2–0	1–2	0–1",
-        "PON	0–0	R35	R26	3–0	4–2	R38	R34	0–1	2–1	2–1	0–0	2–1	R30	0–0	—	1–2	3–2	1–1	R28	R32",
-        "REM	2–1	0–1	1–0	2–1	R38	R28	1–2	1–0	1–0	R36	0–0	R33	1-0	0–1	R31	—	0–2	2–1	0–1	0–0",
-        "SAM	0–2	2–0	R34	2–2	3–1	2–3	2–3	R37	2–0	0–0	R32	1–0	2–0	0–0	1–0	R27	—	R29	R35	R30",
-        "VAS	0–2	R34	1–1	2–1	1–0	R30	3–0	1–1	R32	R27	4–1	1–2	1–1	0–2	2–0	R37	1–0	—	1–0	R35",
-        "VIL	1–0	1–1	0–0	0–1	0–0	0–1	R31	0–0	1–0	0–0	R34	R37	1–0	R27	0–0	R29	0–2	R36	—	0–0",
-        "VIT	0–0	R27	R31	3–1	R29	0–0	1–1	R36	R33	1–1	1–0	1–2	0–1	0–0	1–0	1–2	2–2	0–1	R38	—"
-    ]
     jogos_restantes = []
-
-    for linha in confrontos:
-        time_da_casa = ""
-        for i, trecho in enumerate(linha.split("\t")):
-            if i == 0:
-                time_da_casa = trecho
+    with open('TABELA SERIE B.txt', 'r') as arquivo:
+        for line in arquivo.readlines():
+            [ tcasa, placar, tfora] = line.split()
+            if not placar == '-':
+                casa = dictimes[tcasa]
+                fora = dictimes[tfora]
+                [gcasa, gfora] = placar.split('-')
+                match(casa, fora, int(gcasa), int(gfora))
             else:
-                time_visitante = times[i-1]
-                if trecho.startswith("R"):
-                    jogos_restantes.append((time_da_casa, time_visitante, trecho))
-                elif not trecho.startswith("—"):
-                    dictimes[time_da_casa].casa(trecho)
-                    dictimes[time_visitante].fora(trecho)
-                    #print(f'{time_da_casa} {trecho} {time_visitante}')
+                jogos_restantes.append( (tcasa, tfora) )
 
+    for (casa, fora) in jogos_restantes:
+        algoritmo(dictimes[casa], dictimes[fora])
 
-    jogos_restantes.sort(key=lambda x: x[2])
-    
-    for jogo in jogos_restantes:
-        #simula_random(jogo[0], jogo[1])
-        simula_histo_local(jogo[0], jogo[1])
-        #simula_ved_local(jogo[0], jogo[1])
-        #simula_ved_corvas(jogo[0], jogo[1])
-    
+    dictimes['BRU'].pontos -= 3
 
-
-    times.sort(key=lambda x: dictimes[x].saldo_gols,reverse=True)
-    times.sort(key=lambda x: dictimes[x].vitorias, reverse=True)
-    times.sort(key=lambda x: dictimes[x].pontos,reverse=True)
-    posicoes += times.index('VAS')
+    times.sort(key= lambda x: dictimes[x].saldo_gols, reverse=True)
+    times.sort(key= lambda x: dictimes[x].vitorias, reverse=True)
+    times.sort(key= lambda x: dictimes[x].pontos, reverse=True)
 
     if 'VAS' in times[0:4]:
-        promotions += 1
-        #print(f'-nth:{nth_sim}-----------------------')
-        #for team in times:
-        #    print(f'{team}\t{dictimes[team].pontos}\t{dictimes[team].jogos}')
-        #break
+        promocoes += 1
+    if 'LON' in times[-4:]:
+        qued_lon += 1
+    if 'VIT' in times[-4:]:
+        qued_vit += 1
+    if 'BRU' in times[-4:]:
+        qued_bru += 1
     
-  
-    
+    #for time in times:
+    #    t = dictimes[time]
+    #    print(f'{t.nome}\t{t.pontos}\t{t.rating}')
 
-print(f'Posição média do Vasco: {posicoes/n_simulacoes}, chances de promoção: {promotions/n_simulacoes}' )
+print(f'%de acesso: {promocoes/n_simulacoes}, algoritmo: {algoritmo.__name__}')
+print(f'Quedas: Bru {qued_bru/n_simulacoes}, Vit {qued_vit/n_simulacoes}, Lon {qued_lon/n_simulacoes}')
+
