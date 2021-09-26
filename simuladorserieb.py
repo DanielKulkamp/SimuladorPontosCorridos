@@ -119,7 +119,7 @@ def simula_ELOHFA(casa: Time, fora: Time):
     match(casa, fora, gcasa, gfora)
 
 def main():
-    n_simulacoes = 100000
+    n_simulacoes = 10000
     algoritmo = simula_ELOHFA
 
     for nth_sim in range(n_simulacoes):
