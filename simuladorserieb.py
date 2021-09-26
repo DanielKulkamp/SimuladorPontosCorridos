@@ -69,7 +69,7 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
 
 
 times = ['BRA', 'LON', 'GUA', 'VIT', 'NAU', 'CSA', 'VIL', 'BOT', 'VAS', 'OPE', 'CRB', 'REM', 'CON', 'CRU', 'CFC', 'AVA', 'BRU', 'PON', 'SAM', 'GOI']
-#times = [ "AVA", "BOT", "BRA", "BRU", "CON", "COR", "CRB", "CRU", "CSA", "GOI", "GUA", "LON", "NAU", "OPE", "PON", "REM", "SAM", "VAS", "VIL", "VIT"]
+
 
 dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
 
@@ -167,7 +167,5 @@ def main():
     for time in times:
         print(f'{time}\t{dicprobs[time]["titulos"]/div:.2f}\t{dicprobs[time]["acessos"]/div:.2f}\t{dicprobs[time]["rebaixamentos"]/div:.2f}')
 
-
-
-import cProfile
-cProfile.run('main()')
+if __name__ == "__main__":
+    main()
