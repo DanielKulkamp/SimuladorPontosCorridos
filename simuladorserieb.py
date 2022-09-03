@@ -1,3 +1,4 @@
+from collections import defaultdict
 from random import randint, randrange, uniform, choice
 import copy
 import timeit
@@ -135,11 +136,6 @@ def main():
         for time in times:
             dictimes[time] = copy.copy(dic_inicial[time])
 
-        #for time in times:
-        #    t: Time = dictimes[time]
-        #    print(t.nome, t.rating, t.pontos)
-        
- 
         for (casa, fora) in jogos_restantes:
             algoritmo(dictimes[casa], dictimes[fora])
 
@@ -153,6 +149,8 @@ def main():
             dicprobs[team]["acessos"] += 1
         for team in times[-4:]:
             dicprobs[team]["rebaixamentos"] +=1
+        
+
         
     times.sort(key= lambda x: dicprobs[x]["rebaixamentos"])
     times.sort(key= lambda x: dicprobs[x]["acessos"], reverse=True)
