@@ -1,5 +1,6 @@
 from random import randint, randrange, uniform, choice
 import copy
+import timeit
 
 class Time:
     def __init__(self, nome):
@@ -122,32 +123,53 @@ def main():
     n_simulacoes = 100000
     algoritmo = simula_ELOHFA
 
+    dic_inicial = {}
+    for time in times:
+            dic_inicial[time] = Time(time)
+    
+    jogos_restantes = []
+    jogos_realizados = []
+
+    with open('TABELA SERIE B.txt', 'r') as arquivo:
+        for line in arquivo.readlines():
+            [ tcasa, placar, tfora] = line.split()
+            if not placar == '-':
+                casa = dic_inicial[tcasa]
+                fora = dic_inicial[tfora]
+                [gcasa, gfora] = placar.split('-')
+                jogos_realizados.append((tcasa, int(gcasa), tfora, int(gfora)))
+                #match(casa, fora, int(gcasa), int(gfora))
+            else:
+                jogos_restantes.append( (tcasa, tfora) )
+
+        for (casa, gcasa, fora, gfora) in jogos_realizados:
+            match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
+
+        print("Rating dos times considerando os jogos já realizados")
+        times.sort(key= lambda t: dic_inicial[t].rating, reverse=True)
+        for time in times:
+            t: Time = dic_inicial[time]
+            print(t.nome, f'{t.rating:>8.3f}')
+
+
+
     for nth_sim in range(n_simulacoes):
         if nth_sim % 1000 == 0:
             print(f'-',end="")
 
         dictimes = {}
         for time in times:
-            dictimes[time] = Time(time)
-        jogos_restantes = []
-        with open('TABELA SERIE B.txt', 'r') as arquivo:
-            for line in arquivo.readlines():
-                [ tcasa, placar, tfora] = line.split()
-                if not placar == '-':
-                    casa = dictimes[tcasa]
-                    fora = dictimes[tfora]
-                    [gcasa, gfora] = placar.split('-')
-                    match(casa, fora, int(gcasa), int(gfora))
-                else:
-                    jogos_restantes.append( (tcasa, tfora) )
+            dictimes[time] = copy.copy(dic_inicial[time])
 
-        #dictimes = copy.deepcopy(dic_start)
-
+        #for time in times:
+        #    t: Time = dictimes[time]
+        #    print(t.nome, t.rating, t.pontos)
+        
+ 
         for (casa, fora) in jogos_restantes:
             algoritmo(dictimes[casa], dictimes[fora])
 
-        dictimes['BRU'].pontos -= 3
-
+ 
         times.sort(key= lambda x: dictimes[x].saldo_gols, reverse=True)
         times.sort(key= lambda x: dictimes[x].vitorias, reverse=True)
         times.sort(key= lambda x: dictimes[x].pontos, reverse=True)
@@ -165,7 +187,8 @@ def main():
     print('Time\tTítulo\tSubir\tcair')
     div = n_simulacoes/100
     for time in times:
-        print(f'{time}\t{dicprobs[time]["titulos"]/div:.2f}\t{dicprobs[time]["acessos"]/div:.2f}\t{dicprobs[time]["rebaixamentos"]/div:.2f}')
+        print(f'{time}\t{dicprobs[time]["titulos"]/div:.3f}\t{dicprobs[time]["acessos"]/div:.3f}\t{dicprobs[time]["rebaixamentos"]/div:.3f}')
 
 if __name__ == "__main__":
-    main()
+    print(timeit.timeit(lambda: main(),number=1))
+    
