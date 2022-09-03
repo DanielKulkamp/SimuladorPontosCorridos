@@ -2,6 +2,10 @@ from random import randint, randrange, uniform, choice
 import copy
 import timeit
 
+DIVISOR_ELO = 400.0
+IMPORTANCIA = 60
+BASE_ELO = 10.0
+
 class Time:
     def __init__(self, nome):
         self.rating = 1000.0
@@ -14,78 +18,51 @@ class Time:
         self.gols_contra = 0
         self.saldo_gols = 0
         self.pontos = 0
-        self.vitorias_casa = 0
-        self.vitorias_fora = 0
-        self.empates_casa = 0
-        self.empates_fora = 0
-        self.derrotas_casa = 0
-        self.derrotas_fora = 0
-        self.hist_gol = []
-        self.hist_gol_casa = []
-        self.hist_gol_fora = []
   
-
-
 
 def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
     casa.gols_pro += gcasa
-    #casa.hist_gol_casa.append(gcasa)
-    #casa.hist_gol.append(gcasa)
     casa.gols_contra += gfora
     casa.saldo_gols = casa.gols_pro - casa.gols_contra
     fora.gols_pro += gfora
-    #fora.hist_gol_fora.append(gfora)
-    #fora.hist_gol.append(gfora)
     fora.gols_contra += gcasa
     fora.saldo_gols = fora.gols_pro - fora.gols_contra
     W = 0
     if gcasa > gfora:
         W = 1
         casa.vitorias += 1
-        casa.vitorias_casa += 1
         casa.pontos += 3
         fora.derrotas += 1
-        fora.derrotas_fora += 1
     elif gcasa == gfora:
         W = 0.5
         casa.empates += 1
-        casa.empates_casa += 1
         casa.pontos +=1
         fora.empates += 1
-        fora.empates_fora += 1
         fora.pontos += 1
     else:
         W = 0
         casa.derrotas += 1
-        casa.derrotas_casa += 1
         fora.vitorias += 1
-        fora.vitorias_fora += 1
         fora.pontos += 3
     dr = casa.rating - fora.rating
-    I = 60
-    We = 1./(1.+10.0**(-dr/400.0))
-    delta = I * (W-We)
+    
+    We = 1./(1.+BASE_ELO**(-dr/DIVISOR_ELO))
+    delta = IMPORTANCIA * (W-We)
     casa.rating += delta
     fora.rating -= delta
 
 
-times = ["BRU",  "GUA","VAS",  "VNO","BAH",  "CRU","CHA",  "ITU","PON",  "GRE","SPT",  "SCO","TOM",  "OPE","LEC",  "NAU","NOV",  "CRB","CSA",  "CRI"]
-
-
-dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
+times = ["BRU","GUA","VAS","VNO","BAH","CRU","CHA","ITU","PON","GRE","SPT","SCO","TOM","OPE","LEC","NAU","NOV","CRB","CSA","CRI"]
 
    
-
 
 def simula_random(casa: Time, fora: Time):
     match(casa, fora, randint(0,3), randint(0,3))
 
-def simula_hist_local(casa: Time, fora: Time):
-    match(casa, fora, choice(casa.hist_gol_casa), choice(fora.hist_gol_fora))
 
 def simula_ELO(casa: Time, fora: Time):
     dr = casa.rating - fora.rating
-    We = 1/(1+10**(-dr/400))
+    We = 1/(1+BASE_ELO**(-dr/DIVISOR_ELO))
     if We > 0.5:
         Wdraw = 1-We    
     else:
@@ -99,16 +76,13 @@ def simula_ELO(casa: Time, fora: Time):
 
 def simula_ELOHFA(casa: Time, fora: Time):
     dr = casa.rating+100 - fora.rating
-    We = 1/(1+10**(-dr/400))
+    We = 1/(1+BASE_ELO**(-dr/DIVISOR_ELO))
     if We > 0.5:
         Wdraw = 1-We    
     else:
         Wdraw = We
     Wb = 1-We
-    #results = [] + [(1,0)] *int(100*We)
-    #results += [(0,0)] * int(100*Wdraw)
-    #results += [(0,1)] * int(100*Wb)
-    #(gcasa, gfora) = choice(results)
+
     alea = uniform(0, We+Wdraw+Wb)
     if alea < We:
         (gcasa, gfora) = (1,0)
@@ -124,6 +98,8 @@ def main():
     algoritmo = simula_ELOHFA
 
     dic_inicial = {}
+    dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
+
     for time in times:
             dic_inicial[time] = Time(time)
     
@@ -154,9 +130,7 @@ def main():
 
 
     for nth_sim in range(n_simulacoes):
-        if nth_sim % 1000 == 0:
-            print(f'-',end="")
-
+        
         dictimes = {}
         for time in times:
             dictimes[time] = copy.copy(dic_inicial[time])
