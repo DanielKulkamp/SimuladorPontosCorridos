@@ -68,7 +68,7 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
     fora.rating -= delta
 
 
-times = ['BRA', 'LON', 'GUA', 'VIT', 'NAU', 'CSA', 'VIL', 'BOT', 'VAS', 'OPE', 'CRB', 'REM', 'CON', 'CRU', 'CFC', 'AVA', 'BRU', 'PON', 'SAM', 'GOI']
+times = ["BRU",  "GUA","VAS",  "VNO","BAH",  "CRU","CHA",  "ITU","PON",  "GRE","SPT",  "SCO","TOM",  "OPE","LEC",  "NAU","NOV",  "CRB","CSA",  "CRI"]
 
 
 dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
