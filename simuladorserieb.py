@@ -4,8 +4,12 @@ import copy
 import timeit
 
 DIVISOR_ELO = 400.0
-IMPORTANCIA = 60
+IMPORTANCIA = 40
 BASE_ELO = 10.0
+
+hist_vitorias = []
+hist_empates = []
+hist_derrotas = []
 
 class Time:
     def __init__(self, nome):
@@ -47,8 +51,17 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
         fora.pontos += 3
     dr = casa.rating - fora.rating
     
+    k = 1
+    gd = abs(gcasa - gfora)
+    if gd == 2: 
+        k = 1.5
+    if gd == 3:
+        k = 1.75
+    if gd > 3:
+        k = 1.75 + (gd-3/8)
+
     We = 1./(1.+BASE_ELO**(-dr/DIVISOR_ELO))
-    delta = IMPORTANCIA * (W-We)
+    delta = IMPORTANCIA * k *(W-We)
     casa.rating += delta
     fora.rating -= delta
 
@@ -75,6 +88,7 @@ def simula_ELO(casa: Time, fora: Time):
     (gcasa, gfora) = choice(results)
     match(casa, fora, gcasa, gfora)
 
+
 def simula_ELOHFA(casa: Time, fora: Time):
     dr = casa.rating+100 - fora.rating
     We = 1/(1+BASE_ELO**(-dr/DIVISOR_ELO))
@@ -84,14 +98,15 @@ def simula_ELOHFA(casa: Time, fora: Time):
         Wdraw = We
     Wb = 1-We
 
+
     alea = uniform(0, We+Wdraw+Wb)
     if alea < We:
         (gcasa, gfora) = (1,0)
     elif alea < We+Wdraw:
-        (gcasa, gfora) = (0, 0)
+        (gcasa, gfora) = (0,0)
     else:
-        (gcasa, gfora) = (0, 1)
-    
+        (gcasa, gfora) = (0,1)
+
     match(casa, fora, gcasa, gfora)
 
 def main():
@@ -118,6 +133,15 @@ def main():
                 #match(casa, fora, int(gcasa), int(gfora))
             else:
                 jogos_restantes.append( (tcasa, tfora) )
+
+        #hist_vitorias = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa > gfora]
+        #hist_vitorias.append((1,0))
+        
+        #hist_empates = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa == gfora]
+        #hist_empates.append((0,0))
+        
+        #hist_derrotas = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa < gfora]
+        #hist_derrotas.append((0,1))
 
         for (casa, gcasa, fora, gfora) in jogos_realizados:
             match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
