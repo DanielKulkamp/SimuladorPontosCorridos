@@ -98,7 +98,6 @@ def simula_ELOHFA(casa: Time, fora: Time):
         Wdraw = We
     Wb = 1-We
 
-
     alea = uniform(0, We+Wdraw+Wb)
     if alea < We:
         (gcasa, gfora) = (1,0)
@@ -109,9 +108,30 @@ def simula_ELOHFA(casa: Time, fora: Time):
 
     match(casa, fora, gcasa, gfora)
 
+
+def simula_ELOHFA_NEW(casa: Time, fora: Time):
+    dr = casa.rating+100 - fora.rating
+    divisor = 1+10**(-1*dr/DIVISOR_ELO)+10**(dr/DIVISOR_ELO)
+    We = 10**(dr/DIVISOR_ELO)/(divisor)
+    Wl = 10**(-1*dr/DIVISOR_ELO)/(divisor)
+    Wdraw = 1/(divisor)
+
+    alea = uniform(0, 1)
+    #print(f'{alea}, {We}, {Wdraw}, {Wl}, {We+Wdraw+Wl})')
+
+    if alea < We:
+        (gcasa, gfora) = (1,0)
+    elif alea-We < Wdraw:
+        (gcasa, gfora) = (0,0)
+    else:
+        (gcasa, gfora) = (0,1)
+    #print(f'{casa.nome} {gcasa}-{gfora} {fora.nome}')
+    match(casa, fora, gcasa, gfora)
+
+
 def main():
     n_simulacoes = 100000
-    algoritmo = simula_ELOHFA
+    algoritmo = simula_ELOHFA_NEW
 
     dic_inicial = {}
     dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
