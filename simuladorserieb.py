@@ -117,15 +117,14 @@ def simula_ELOHFA_NEW(casa: Time, fora: Time):
     Wdraw = 1/(divisor)
 
     alea = uniform(0, 1)
-    #print(f'{alea}, {We}, {Wdraw}, {Wl}, {We+Wdraw+Wl})')
-
+    
     if alea < We:
         (gcasa, gfora) = (1,0)
     elif alea-We < Wdraw:
         (gcasa, gfora) = (0,0)
     else:
         (gcasa, gfora) = (0,1)
-    #print(f'{casa.nome} {gcasa}-{gfora} {fora.nome}')
+    
     match(casa, fora, gcasa, gfora)
 
 
@@ -154,15 +153,6 @@ def main():
             else:
                 jogos_restantes.append( (tcasa, tfora) )
 
-        #hist_vitorias = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa > gfora]
-        #hist_vitorias.append((1,0))
-        
-        #hist_empates = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa == gfora]
-        #hist_empates.append((0,0))
-        
-        #hist_derrotas = [ (gcasa, gfora) for (_, gcasa, _, gfora) in jogos_realizados if gcasa < gfora]
-        #hist_derrotas.append((0,1))
-
         for (casa, gcasa, fora, gfora) in jogos_realizados:
             match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
 
@@ -172,7 +162,15 @@ def main():
             t: Time = dic_inicial[time]
             print(t.nome, f'{t.rating:>8.3f}')
 
-
+        print("\nProbabilidades de Vitória nos Próximos 10 Jogos:")
+        print("Casa\tP.Casa\tEmpate\tP.Fora\tFora")
+        for (tcasa, tfora) in jogos_restantes[:10]:
+            dr = dic_inicial[tcasa].rating-dic_inicial[tfora].rating+100
+            divisor = 1+10**(-1*dr/DIVISOR_ELO)+10**(dr/DIVISOR_ELO)
+            We = 10**(dr/DIVISOR_ELO)/(divisor)
+            Wl = 10**(-1*dr/DIVISOR_ELO)/(divisor)
+            Wdraw = 1/(divisor)
+            print(f'{tcasa}\t{100*We:.2f}\t{100*Wdraw:.2f}\t{100*Wl:.2f}\t{tfora:10}')
 
     for nth_sim in range(n_simulacoes):
         
