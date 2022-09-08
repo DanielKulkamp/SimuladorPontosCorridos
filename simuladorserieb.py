@@ -66,7 +66,7 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
     fora.rating -= delta
 
 
-times = ["BRU","GUA","VAS","VNO","BAH","CRU","CHA","ITU","PON","GRE","SPT","SCO","TOM","OPE","LEC","NAU","NOV","CRB","CSA","CRI"]
+times = []#["BRU","GUA","VAS","VNO","BAH","CRU","CHA","ITU","PON","GRE","SPT","SCO","TOM","OPE","LEC","NAU","NOV","CRB","CSA","CRI"]
 
    
 
@@ -133,28 +133,40 @@ def main():
     algoritmo = simula_ELOHFA_NEW
 
     dic_inicial = {}
-    dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
+    dic_hist_rating = {}
 
-    for time in times:
-            dic_inicial[time] = Time(time)
-    
     jogos_restantes = []
     jogos_realizados = []
+    
 
     with open('TABELA SERIE B.txt', 'r') as arquivo:
         for line in arquivo.readlines():
             [ tcasa, placar, tfora] = line.split()
+            if tcasa not in times:
+                times.append(tcasa)
+                dic_inicial[tcasa] = Time(tcasa)
+                dic_hist_rating[tcasa] = [ 1000.0]
+            if tfora not in times:
+                times.append(tfora)
+                dic_inicial[tfora] = Time(tfora)
+                dic_hist_rating[tfora] = [ 1000.0]
             if not placar == '-':
                 casa = dic_inicial[tcasa]
                 fora = dic_inicial[tfora]
                 [gcasa, gfora] = placar.split('-')
                 jogos_realizados.append((tcasa, int(gcasa), tfora, int(gfora)))
-                #match(casa, fora, int(gcasa), int(gfora))
             else:
                 jogos_restantes.append( (tcasa, tfora) )
 
+
         for (casa, gcasa, fora, gfora) in jogos_realizados:
             match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
+            dic_hist_rating[casa].append(dic_inicial[casa].rating)
+            dic_hist_rating[fora].append(dic_inicial[fora].rating)
+        with open('hist_rating.txt', 'w') as out_rating:
+            lines = [ f'{nome}\t{lista}\nt' for (nome, lista) in dic_hist_rating.items()]
+            out_rating.writelines(lines)
+        
 
         print("Rating dos times considerando os jogos já realizados")
         times.sort(key= lambda t: dic_inicial[t].rating, reverse=True)
@@ -172,6 +184,8 @@ def main():
             Wdraw = 1/(divisor)
             print(f'{tcasa}\t{100*We:.2f}\t{100*Wdraw:.2f}\t{100*Wl:.2f}\t{tfora:10}')
 
+    
+    dicprobs = { time:{"titulos":0, "acessos":0, "rebaixamentos":0} for time in times}
     for nth_sim in range(n_simulacoes):
         
         dictimes = {}
