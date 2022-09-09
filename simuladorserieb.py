@@ -126,7 +126,7 @@ def simula_elo_hfa_new(casa: Time, fora: Time):
 
 def main():
     '''Main function.'''
-    n_simulacoes = 100000
+    n_simulacoes = 100_000
     algoritmo = simula_elo_hfa_new
     dic_inicial = {}
     dic_hist_rating = {}
@@ -151,7 +151,6 @@ def main():
                 jogos_realizados.append((tcasa, int(gcasa), tfora, int(gfora)))
             else:
                 jogos_restantes.append( (tcasa, tfora) )
-
 
         for (casa, gcasa, fora, gfora) in jogos_realizados:
             match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
