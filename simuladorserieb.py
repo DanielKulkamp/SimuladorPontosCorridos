@@ -1,13 +1,14 @@
 '''simulador serie b'''
 
+
 from random import randint, uniform, choice
 import copy
 import timeit
 
 DIVISOR_ELO = 400.0
-IMPORTANCIA = 40
+IMPORTANCIA = 10
 BASE_ELO = 10.0
-
+hist_results = [(1,0),(0,0),(1,1)]
 
 class Time:
     '''representa um time com rating e pontuação em um campeonato'''
@@ -49,7 +50,6 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
         casa.derrotas += 1
         fora.vitorias += 1
         fora.pontos += 3
-
     delta_rating = casa.rating - fora.rating
     bonus_saldo = 1
     saldo = abs(gcasa - gfora)
@@ -59,7 +59,6 @@ def match( casa: Time, fora: Time, gcasa: int, gfora: int ):
         bonus_saldo = 1.75
     if saldo > 3:
         bonus_saldo = 1.75 + (saldo-3/8)
-
     win_expectancy = 1./(1.+BASE_ELO**(-delta_rating/DIVISOR_ELO))
     delta = IMPORTANCIA * bonus_saldo *(win-win_expectancy)
     casa.rating += delta
@@ -69,6 +68,10 @@ def simula_random(casa: Time, fora: Time):
     '''simulação totalmente aleatória'''
     match(casa, fora, randint(0,3), randint(0,3))
 
+def simula_rand_result(casa: Time, fora: Time):
+    '''simula aleatório com base nos resultas reais'''
+    (gcasa, gfora) = choice(hist_results)
+    match(casa, fora, gcasa, gfora)
 
 def simula_elo(casa: Time, fora: Time):
     '''simuma pelo metodo ELO sem vantagem para o time da casa'''
@@ -105,6 +108,15 @@ def simula_elo_hfa(casa: Time, fora: Time):
         (gcasa, gfora) = (0,1)
 
     match(casa, fora, gcasa, gfora)
+
+def calc_elo_hfa_new(casa: Time, fora: Time):
+    '''calcula probabilidades partidas utilizando algoritmo ELO corrigido'''
+    delta_rating = casa.rating+100 - fora.rating
+    divisor = 1+10**(-1*delta_rating/DIVISOR_ELO)+10**(delta_rating/DIVISOR_ELO)
+    win_expectancy = 10**(delta_rating/DIVISOR_ELO)/(divisor)
+    #Wl = 10**(-1*dr/DIVISOR_ELO)/(divisor)
+    draw_expectancy = 1/(divisor)
+    return (win_expectancy, draw_expectancy, 1-win_expectancy-draw_expectancy)
 
 
 def simula_elo_hfa_new(casa: Time, fora: Time):
@@ -149,16 +161,23 @@ def main():
                 fora = dic_inicial[tfora]
                 [gcasa, gfora] = placar.split('-')
                 jogos_realizados.append((tcasa, int(gcasa), tfora, int(gfora)))
+                hist_results.append((int(gcasa), int(gfora)))
             else:
                 jogos_restantes.append( (tcasa, tfora) )
+        with open('hist_prob_vit_res.txt', 'w', encoding='UTF-8') as out_probs:
+            for (casa, gcasa, fora, gfora) in jogos_realizados:
+                (pw, pe, pl) = calc_elo_hfa_new(dic_inicial[casa],dic_inicial[fora])
+                out_probs.write(f'{casa}\t{pw:.4f}\t{pe:.4f}\t{pl:.4f}\t{fora}\t{gcasa}\t{gfora}\n')
+                match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
+                dic_hist_rating[casa].append(dic_inicial[casa].rating)
+                dic_hist_rating[fora].append(dic_inicial[fora].rating)
 
-        for (casa, gcasa, fora, gfora) in jogos_realizados:
-            match(dic_inicial[casa], dic_inicial[fora], gcasa, gfora)
-            dic_hist_rating[casa].append(dic_inicial[casa].rating)
-            dic_hist_rating[fora].append(dic_inicial[fora].rating)
+        
+            
+                
 
         with open('hist_rating.txt', 'w', encoding='UTF-8') as out_rating:
-            lines = [ f'{nome}\t{lista}\nt' for (nome, lista) in dic_hist_rating.items()]
+            lines = [ f'{nome}\t{lista}\n' for (nome, lista) in dic_hist_rating.items()]
             out_rating.writelines(lines)
         print("Rating dos times considerando os jogos já realizados")
         nomes_times.sort(key= lambda t: dic_inicial[t].rating, reverse=True)
